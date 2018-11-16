@@ -3,6 +3,7 @@ const Discord = require("discord.js");
 const fs = require("fs");
 const bot = new Discord.Client({disableEveryone: true});
 let coins = require("./coins.json");
+let badges = require("./badges.json");
 let cmdcooldown = new Set();
 let cmdcdseconds = 5;
 let E001 = "`[001] You must wait 5 seconds between commands`"
@@ -10,33 +11,46 @@ let E002 = "`[002] You must wait 24 hours between uses`"
 let E003 = "`[003] You must have permission ADMINISTRATOR to use this command`"
 let E004 = "`[004] You must provide a user to use this command.`"
 let E005 = "`[005] You must provide an amount to use this command`"
+let E006 = "`[006] Incorrect usage: !coin <@user> <add|sub|set> <amount>`"
 let dailycooldown = new Set();
 let dailycdseconds = 86400;
 let color = require("./colors.json");
 let rank = require("./rank.json");
+let role = require("./role.json");
+let prestige = require("./prestige.json");
+let welcomeMessage = require("./welcomeMessage.json");
+
 bot.on("ready", async () => {
-  console.log(`EcoBot is online!`);
+  console.log(`Tester Bot is online!`);
   
 });
 bot.on("message", async message => {
 if(message.author.bot) return;
-if(message.channel.type === "dm") return;
+
 let prefixes = JSON.parse(fs.readFileSync("./prefixes.json", "utf8"));
 let auth = message.author
 let messageArray = message.content.split(" ");
 let args = messageArray.slice(1);
 let cmd = messageArray[0];
 let auth2 = message.author.username
-if (!prefixes[message.guild.id]){
-    prefixes[message.guild.id] = {
-        prefixes: botconfig.prefix
-    };
-}
-let Status = message.guild.memberCount - 10
+if(message.channel.type === "dm") return;
 let prefix = botconfig.prefix
-bot.user.setActivity(`${Status} users! | ${botconfig.prefix}help`, {type: "WATCHING"});
+bot.user.setActivity(`${message.guild.memberCount} users! | ${botconfig.prefix}help`, {type: "WATCHING"});
 let coinAmt = Math.floor(Math.random() * 15) + 1;
 let baseAmt = Math.floor(Math.random() * 15) + 1;
+let rankuplogs = message.guild.channels.find(c => c.name === "🤖rankup-logs");
+let prestigelogs = message.guild.channels.find(c => c.name === "508286259077185536");
+let TEMP = "TEMP"
+let botImage = bot.user.displayAvatarURL
+let authImage = message.author.displayAvatarURL
+const channelName = message.mentions
+const content123 = args.slice(4).join(" ");
+let welcomeColor = require("./welcomeColor.json");
+let welcomeChannel = require("./welcomeChannel");
+const userAmount = message.guild.members.filter(mem => !mem.user.bot).size;
+let x = message.guild.members;
+let Status = x.filter(m => !m.user.bot).size;
+bot.user.setActivity(`${Status} users! | ${botconfig.prefix}help`, {type: "WATCHING"});
 console.log(`${coinAmt} ; ${baseAmt}`);
 if(coinAmt === baseAmt){
   coins[message.author.id] = {
@@ -47,7 +61,7 @@ if(coinAmt === baseAmt){
     if (err) console.log(err)
   });
   let CoinEmbed = new Discord.RichEmbed()
-  .setColor("#E0A80d")
+  .setColor(color.coin)
   .setTitle(`💸 ${coinAmt} coins added! 💸`)
   .setDescription(`${auth}`)
   message.channel.send(CoinEmbed).then(msg => {msg.delete(10000)});
@@ -56,10 +70,10 @@ if(!message.content.startsWith(prefix)) return;
 if(cmdcooldown.has(message.author.id)){
   message.delete();
     let EE001 = new Discord.RichEmbed()
-    .setColor(color.error)
+    .setColor("#ED5858")
     .setTitle("Error")
     .setDescription(`An error occurred when attempting to perform that request. Please check the Syntax and try again.\nError: ${E001}`)
-  return message.channel.send(EE001).then(msg => {msg.delete(10000)})
+  return message.channel.send(EE001)
 }
 if(!message.member.hasPermission("ADMINISTRATOR")){
   cmdcooldown.add(message.author.id);
@@ -73,6 +87,27 @@ setTimeout(() => {
 //COMMANDS\\
 //COMMANDS\\
 
+//!badge @user BadgeListForUser
+if(cmd === `${prefix}badge`) {
+  if(message.member.hasPermission("ADMINISTRATOR")) {
+  if(!badges[message.author.id]){
+    badges[message.author.id] = {
+      badges: ""};}
+  if(!args[1]) {
+    return message.reply("Usage: `!badge` `@user` `BadgeListForThatUser`")}
+  else {
+    badges[message.mentions.users.first().id] = {
+      badges: args.slice(1).join(" ")}
+    fs.writeFile("./badges.json", JSON.stringify(badges), (err) => {
+      if (err) console.log (err)})
+    let bTag2 = message.mentions.users.first().username
+    let bImage = message.mentions.users.first().displayAvatarURL
+    let bMessage = args.slice(1).join(" ");
+    let badgeEmbed = new Discord.RichEmbed()
+    .setColor(color.lightblue)
+    .setAuthor(`${bTag2}'s badges have been set to ${bMessage}`, `${bImage}`)
+    return message.channel.send(badgeEmbed)}}}
+  
 //!rank
 if(cmd === `${prefix}rank`) {
   if(message.member.hasPermission("ADMINISTRATOR")) {
@@ -86,17 +121,88 @@ if(cmd === `${prefix}rank`) {
   }
 }
 
+//secret command... !food
+if(cmd === `${prefix}food`) {
+  if(!args[0]) {
+    let foodEmbed = new Discord.RichEmbed()
+    .setColor(color.lime)
+    .setTitle("**Food!**")
+    .addField("Cookie:", "🍪", true)
+    .addField("Pizza:", "🍕", true)
+    .addField("Ice Cream:", "🍨", true)
+    .addField("Cheese Burger:", "🍔", true)
+    .addField("Hot Dog:", "🌭", true)
+    .addField("Popcorn:", "🍿", true)
+    .addField("Doghnut:", "🍩", true)
+    .addField("Cheese:", "🧀", true)
+    .addField("Bacon:", "🥓", true)
+    return message.channel.send(foodEmbed)}}
+  
+//!broadcast
+if(cmd === `${prefix}broadcast`) {
+  let channelID = args[0]
+  let bChannel = message.guild.channels.find(c => c.id ===`${channelID}`)
+  let content = args.slice(2).join(" ");
+  if(!args[2]) {
+    message.reply("Usage: `!broadcast` `channelID` `EmbedColor` `Words`")
+    message.channel.send("Example: `!broadcast` `421525951969755137` `#FFFFFF` `Hello`, will respond with")
+    let tEmbed = new Discord.RichEmbed()
+    .setColor("#FFFFFF")
+    .setDescription("Hello")
+    return message.channel.send(tEmbed)}
+  let Bembed = new Discord.RichEmbed()
+  .setColor(args[1])
+  .setDescription(content)
+  return bChannel.send(Bembed)}
 
-//!boo
-if(cmd === `${prefix}boo`) {
-  let replies = ["Best Witches!", "Boo!", "Ghosts Gather Here", "Spooky Scary Skelatons! ", "I'm Off Havin A Coffin Break!"]
-  let result = Math.floor((Math.random() * replies.length));
-  let bEmbed = new Discord.RichEmbed()
-  .setColor(color.orange)
-  .setTitle(replies[result])
-  message.channel.send(bEmbed);
-}
+//!8ball <question>
+if(cmd === `${prefix}8ball`) {
+  if(!(args[2])) {
+    message.reply("please ask a full question!")}
+  else {
+    let replies = ["Yes", "No", "Ask again", "I don't know", "Maybe", "Probably", "Unlikely", "Possibly"]
+    let bResult = Math.floor((Math.random() * replies.length));
+    let question = args.slice(0).join(" ");
+    let bEmbed = new Discord.RichEmbed()
+      .setAuthor(auth2)
+      .setColor(color.purple)
+      .addField("Question", question)
+      .addField("Answer", replies[bResult])
+    return message.channel.send(bEmbed)}}
 
+//!profile
+if(cmd === `${prefix}profile`) {
+  let uBadges = badges[message.author.id].badges;
+  let rank1 = rank[message.author.id].rank;
+  let rank2 = ["HOW THE FUCK ARE YOU RANK `0`?!?!?!?", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "HOW THE FUCK ARE YOU RANK `11`?!?!?!?"]
+  let rank3 = rank2[rank1]
+  let joined = message.member.joinedAt.toLocaleString()
+  let uCoins = coins[message.author.id].coins;
+  let Color = message.member.highestRole.hexColor;
+  if(!prestige[message.author.id]){
+    prestige[message.author.id] = {
+      prestige: 0}}
+    fs.writeFile("./prestige.json", JSON.stringify(prestige), (err) => {
+      if (err) console.log (err)})
+  if(!role[message.author.id]){
+    role[message.author.id] = {
+      role: "<:Member:506209623662133259>"}}
+    fs.writeFile("./role.json", JSON.stringify(role), (err) => {
+      if (err) console.log (err)})
+  let Role = role[message.author.id].role;
+  let Prestige = prestige[message.author.id].prestige;
+  let pEmbed = new Discord.RichEmbed()
+  .setColor(Color)
+  .setTitle(`${Role} ${auth2}'s profile!`)
+  .setDescription(uBadges, true)
+  .addField("Rank", "Coming Soon", true)
+  .addField("Prestige", "Coming Soon", true)
+  .addBlankField(true)
+  .addField("Member Since", joined, true)
+  .addField("Balance", `${uCoins} Coins`, true)
+  .addBlankField(true)
+  return message.channel.send(pEmbed)}
+  
 //!help
 if(cmd === `${prefix}help`) {
   let staffRole = message.guild.roles.get(`495347169914781696`)
@@ -125,6 +231,35 @@ if(cmd === `${prefix}help`) {
   } 
 }
 
+  //!gamble <amount>
+if(cmd === `${prefix}gamble`) {
+  if(parseInt(args[0])) {
+    let gUser = message.author.id
+    let gCoins = coins[message.author.id].coins
+    let gAmount = parseInt(args[0])
+    let chance = Math.random() + 1
+    if(gUser >= gAmount) {
+      if(chance = 1){
+        let win = new Discord.RichEmbed()
+          .setColor(color.lime)
+          .setAuthor(auth2, botImage)
+          .setDescription(`You have won ${gAmount} coins and recieved your original bet back!`)
+        coins[gUser] = {
+          coins: gCoins + gAmount}
+        message.channel.send(win)
+        fs.writeFile("./coins.json", JSON.stringify(coins), (err) => {
+          if (err) console.log (err)});
+      }else{
+        let lose = new Discord.RichEmbed()
+          .setColor(color.red)
+          .setAuthor(auth2, botImage)
+          .setDescription(`You have lost ${gAmount}** coins!`)
+          coins[gUser] = {
+            coins: gCoins - gAmount}
+        message.channel.send(lose)
+        fs.writeFile("./coins.json", JSON.stringify(coins), (err) => {
+          if (err) console.log (err)});}}}}
+
 //!pay <@user> <amount>
 if(cmd === `${prefix}pay`) {
   if(!coins[message.author.id]){
@@ -152,19 +287,6 @@ if(cmd === `${prefix}pay`) {
   });
   }
   
-  if(cmd === `${prefix}coming`) {
-    if(message.member.hasPermission("ADMINISTRATOR")) {
-      if(args[0] === soon) {
-        let csEmbed = new Discord.RichEmbed()
-        .setColor(color.lightblue)
-        .setTitle("Commands coming soon!")
-        .setDescription("`!shop` - opens the shop\n`!gamble` `amount`- gambles whatever amount you entered\n`!rank` - displays your rank\n`!rankup` - ranks you up for a fee of coins\n`!leaderboard` - displays the coin leaderboard\n`!profile` - displays your profile\n`!prestige` - prestiges you with some perks\n`!8ball` `question` - will answer your question like a magic 8 ball\n`!badge` `@user` `add|take` `badge` - Staff command that will add or remove a badge")
-        .setFooter("DM @Cobble8#0881 to suggest more commands!")
-        return message.channel.send(csEmbed)
-      }
-    }
-  }
-
   //!daily
   if(cmd === `${prefix}daily`) {
     if(dailycooldown.has(message.author.id)){
@@ -317,18 +439,7 @@ if(cmd === `${prefix}pay`) {
     message.channel.send(serverembed);
     }}
   
-  //!info
-  if(cmd === `${prefix}info`) {
-    let infoembed = new Discord.RichEmbed()
-    .setTitle("**Member Count**")
-    .setColor(color.pink)
-    .addField("PC Count", 13)
-    .addField("Xbox Count", 4)
-    .addField("PS4 Count", 1)
-    .setFooter(`Updated On 10/2/2018`);
-  message.channel.send(infoembed);
-  }
-  
+ 
   //!hug
   if(cmd === `${prefix}hug`) {
     message.channel.send(`Heres a nice warm hug ${message.author}`);
@@ -336,17 +447,26 @@ if(cmd === `${prefix}pay`) {
   
   //!coins
   if(cmd === `${prefix}coins`) {
+    if(!(args[0])) {
     if(!coins[message.author.id]){
       coins[message.author.id] = {
-        coins: 0
-      };
-    }
+        coins: 0};}
     let uCoins = coins[message.author.id].coins;
     let coinEmbed = new Discord.RichEmbed()
-    //let auth = message.author
-    .setTitle(`${auth2} has ${uCoins} coins.`)
+    .setAuthor(`${auth2}'s coins:`, authImage)
+    .setDescription(`You currently have ${uCoins} coins!`)
     .setColor(color.coin);
-    message.channel.send(coinEmbed).then(msg => {msg.delete(15000)});
-}
+    return message.channel.send(coinEmbed)}
+    else {
+      let mentionedUser = message.mentions.users.first().id
+      let mentionedUser2 = message.mentions.users.first().username
+      let mentionedUser3 = message.mentions.users.first().displayAvatarURL
+      let mCoins = coins[mentionedUser].coins;
+      let otherCoinEmbed = new Discord.RichEmbed()
+      .setAuthor(`${mentionedUser2}'s coins`, mentionedUser3)
+      .setDescription(`They currently have ${mCoins} coins!`)
+      .setColor(color.coin)
+      return message.channel.send(otherCoinEmbed)}}
+
 })
 bot.login(botconfig.ecotoken);
