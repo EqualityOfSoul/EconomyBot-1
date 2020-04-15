@@ -9,7 +9,7 @@
   "author": "Cobble8",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^11.4.2",
+    "discord.js": "^12.1.1",
     "fortnite": "^4.1.1"
   },
   "devDependencies": {}
